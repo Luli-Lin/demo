@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.mapper.StuMapper">
+
+    <!-- 添加学生 -->
+    <insert id="insert">
+        INSERT INTO student(name, no, gender, phone, degree, id_card, is_college, address, graduation_date, clazz_id, create_time, update_time)
+        VALUES (#{name}, #{no}, #{gender}, #{phone}, #{degree}, #{idCard}, #{isCollege}, #{address}, #{graduationDate},  #{clazzId}, #{createTime}, #{updateTime})
+    </insert>
+
+    <!-- 根据ID更新学生信息 -->
+    <update id="update">
+        UPDATE student
+        SET
+            name = #{name},
+            no = #{no},
+            gender = #{gender},
+            phone = #{phone},
+            degree = #{degree},
+            id_card = #{idCard},
+            is_college = #{isCollege},
+            address = #{address},
+            graduation_date = #{graduationDate},
+            violation_count = #{violationCount},
+            violation_score = #{violationScore},
+            clazz_id = #{clazzId}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateViolation">
+        UPDATE student
+        SET
+            violation_score = #{score},
+            violation_count = violation_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除多个学生 -->
+    <delete id="deleteByIds">
+        DELETE FROM student WHERE id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 条件查询学生列表 -->
+    <select id="list" resultType="com.itheima.pojo.Student">
+        SELECT
+        s.id,
+        s.name,
+        s.no,
+        s.gender,
+        s.phone,
+        s.degree,
+        s.id_card AS idCard,
+        s.is_college AS isCollege,
+        s.address,
+        s.graduation_date AS graduationDate,
+        s.violation_count AS violationCount,
+        s.violation_score AS violationScore,
+        s.clazz_id AS clazzId,
+        c.name AS clazzName,
+        s.create_time AS createTime,
+        s.update_time AS updateTime
+        FROM student s
+        LEFT JOIN clazz c ON s.clazz_id = c.id
+        <where>
+            <if test="name != null and name != ''">
+                AND s.name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="degree != null">
+                AND s.degree = #{degree}
+            </if>
+            <if test="clazzId != null">
+                AND s.clazz_id = #{clazzId}
+            </if>
+        </where>
+        ORDER BY s.update_time DESC
+    </select>
+
+    <select id="getById" resultType="com.itheima.pojo.Student">
+        SELECT
+        s.id,
+        s.name,
+        s.no,
+        s.gender,
+        s.phone,
+        s.degree,
+        s.id_card AS idCard,
+        s.is_college AS isCollege,
+        s.address,
+        s.graduation_date AS graduationDate,
+        s.violation_count AS violationCount,
+        s.violation_score AS violationScore,
+        s.clazz_id AS clazzId,
+        s.create_time AS createTime,
+        s.update_time AS updateTime
+        FROM student s
+        WHERE s.id = #{id}
+    </select>
+
+    <select id="countStudentDegreeData" resultType="java.util.Map">
+        select
+            (case degree when 1 then '初中'
+                         when 2 then '高中'
+                         when 3 then '大专'
+                         when 4 then '本科'
+                         when 5 then '硕士'
+                         when 6 then '博士'
+                         else '其他' end) as  degreeName,
+            count(*) as total
+        from student
+        group by degree
+        order by total desc
+    </select>
+
+    <select id="getStudentCountData" resultType="java.util.Map">
+        SELECT
+            c.name AS clazzName,
+            COUNT(*) AS studentCount
+        FROM student s
+                 LEFT JOIN clazz c ON s.clazz_id = c.id
+        GROUP BY c.id, c.name
+        ORDER BY c.name
+    </select>
+
+
+</mapper>
